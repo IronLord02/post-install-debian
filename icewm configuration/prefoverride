@@ -1,0 +1,11 @@
+# IceWM preferences override - these take precedence over themes
+# This file is loaded after the theme, so it can override theme settings
+
+# Font sizes increased for readability
+MenuFontNameXft="DejaVu Sans:size=13:bold"
+TitleFontNameXft="DejaVu Sans:size=14"
+NormalButtonFontNameXft="DejaVu Sans:size=14"
+NormalTaskBarFontNameXft="DejaVu Sans:size=14"
+ActiveTaskBarFontNameXft="DejaVu Sans:size=14:bold"
+ActiveButtonFontNameXft="DejaVu Sans:size=14:bold"
+TitleBarHeight=36

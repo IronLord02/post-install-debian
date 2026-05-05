@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Iniciar trayer (bandeja del sistema) primero - necesario para IceWM
+trayer --edge top --align right --width 10 --height 28 --transparent true --tint 0x1a1a1a &
+
+# Iniciar volumeicon-alsa (control de volumen en bandeja)
+volumeicon-alsa &
+
+# Iniciar udiskie con notificaciones y montaje automático
+# IMPORTANTE: usar -t (tray) para que aparezca en la bandeja del sistema
+udiskie -t -n &
+
+# Iniciar el agente de autenticación polkit de LXDE
+/usr/bin/lxpolkit &
+
+# Iniciar nm-applet para gestión de red
+nm-applet &
+
+# Aquí puedes añadir otros programas que quieras iniciar automáticamente
+
+# se instala con sudo apt update && sudo apt install -y icewm udiskie volumeicon-alsa lxpolkit network-manager-gnome trayer

@@ -1,0 +1,72 @@
+# =============================================================================
+# Instalador de i3 + bumblebee-status (tema solarized powerline)
+# =============================================================================
+# Ejecutar todos los comandos como usuario normal (no root)
+# =============================================================================
+
+# 1. INSTALAR DEPENDENCIAS DEL SISTEMA
+# -----------------------------------------------------------------------------
+sudo apt update
+
+# Paquetes necesarios para bumblebee-status y módulos
+sudo apt install -y \
+    python3-netifaces \
+    iw \
+    fonts-powerline \
+    fonts-font-awesome \
+    dex \
+    xss-lock \
+    i3lock \
+    network-manager-gnome \
+    pnmixer \
+    udiskie \
+    nitrogen \
+    rofi \
+    lxterminal
+
+# 2. INSTALAR BUMBLEBEE-STATUS (si no está en ~/.config/i3/)
+# -----------------------------------------------------------------------------
+# Opción A: Desde Python pip (si querés la versión más actualizada)
+# pip3 install --user bumblebee-status
+
+# Opción B: clonando el repositorio (esta configuración usa esta opción)
+# git clone https://github.com/tobi-wan-kenobi/bumblebee-status.git ~/.config/i3/bumblebee-status
+
+# 3. COPIAR CONFIG DE I3
+# -----------------------------------------------------------------------------
+# Copiá este archivo a ~/.config/i3/config
+# cp config ~/.config/i3/config
+
+# 4. RECARGAR I3
+# -----------------------------------------------------------------------------
+i3-msg restart
+
+# O presioná Win+Shift+r para recargar la configuración
+
+# =============================================================================
+# PAQUETES INSTALADOS CON ESTE SETUP:
+# =============================================================================
+# - python3-netifaces   (para módulo nic de bumblebee-status)
+# - iw                 (para detectar redes wifi)
+# - fonts-powerline      (fuentes powerline)
+# - fonts-font-awesome (iconos)
+# - dex                (XDG autostart)
+# - xss-lock + i3lock  (bloqueo de pantalla)
+# - network-manager-gnome (nm-applet)
+# - pnmixer          (control de volumen)
+# - udiskie         (montaje automático de discos)
+# - nitrogen       (wallpaper)
+# - rofi           (lanzador de apps)
+# - lxterminal    (terminal)
+
+# =============================================================================
+# MÓDULOS CONFIGURADOS EN LA BARRA:
+# =============================================================================
+# - nic      = estado de red (conectado/abajo + IP)
+# - cpu      = uso de CPU
+# - memory  = uso de RAM
+# - date    = fecha (ej: sáb 25 abr)
+# - time    = hora (ej: 21:30)
+
+# TEMA: solarized-powerline
+# FUENTE: DejaVu Sans Mono 12
