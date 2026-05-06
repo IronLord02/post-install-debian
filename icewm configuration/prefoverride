@@ -2,10 +2,10 @@
 # This file is loaded after the theme, so it can override theme settings
 
 # Font sizes increased for readability
-MenuFontNameXft="DejaVu Sans:size=13:bold"
-TitleFontNameXft="DejaVu Sans:size=14"
-NormalButtonFontNameXft="DejaVu Sans:size=14"
-NormalTaskBarFontNameXft="DejaVu Sans:size=14"
-ActiveTaskBarFontNameXft="DejaVu Sans:size=14:bold"
-ActiveButtonFontNameXft="DejaVu Sans:size=14:bold"
+MenuFontNameXft="DejaVu Sans:size=11:bold"
+TitleFontNameXft="DejaVu Sans:size=11"
+NormalButtonFontNameXft="DejaVu Sans:size=11"
+NormalTaskBarFontNameXft="DejaVu Sans:size=11"
+ActiveTaskBarFontNameXft="DejaVu Sans:size=11:bold"
+ActiveButtonFontNameXft="DejaVu Sans:size=11:bold"
 TitleBarHeight=36
