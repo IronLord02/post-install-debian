@@ -1,5 +1,34 @@
 #!/bin/bash
 
+# ============================================
+# BIENVENIDA AL SCRIPT DE POST-INSTALACIÓN
+# ============================================
+
+clear
+echo ""
+echo "╔══════════════════════════════════════════════════════════╗"
+echo "║                                                          ║"
+echo "║     Bienvenido al Script de Post-Instalación Debian      ║"
+echo "║                                                          ║"
+echo "║  Este script instalará paquetes y aplicaciones que te    ║"
+echo "║  permiten personalizar y optimizar tu sistema Debian.    ║"
+echo "║                                                          ║"
+echo "╚══════════════════════════════════════════════════════════╝"
+echo ""
+echo "Se procederá a actualizar repositorios e instalar herramientas"
+echo "básicas necesarias (nala, axel, git, speedtest-cli, dialog)."
+echo ""
+read -p "¿Deseas continuar con la instalación de los paquetes básicos? (s/n): " confirmacion
+
+if [[ "$confirmacion" != "s" && "$confirmacion" != "S" ]]; then
+    echo "Instalación cancelada por el usuario."
+    exit 0
+fi
+
+echo ""
+echo "Iniciando instalación de paquetes básicos..."
+echo ""
+
 # Actualizar repositorios e instalar nala, axel, git
 sudo apt update -y
 sudo apt install -y nala
