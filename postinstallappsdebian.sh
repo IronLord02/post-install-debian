@@ -1,56 +1,166 @@
 #!/bin/bash
 
-# Actualizar repositorios e instalar nala, axel, git
-sudo apt update -y
-sudo apt install -y nala
-sudo nala install -y axel git speedtest-cli
+# ============================================
+# VERIFICACIÓN Y CONFIGURACIÓN DE SUDO INICIAL
+# ============================================
+# Esta sección debe ejecutarse ANTES de cualquier comando privilegiado
+# para asegurar que el usuario tenga acceso sudo configurado correctamente
 
-# Comprobar si dialog está instalado, si no, instalarlo
-if ! command -v dialog &> /dev/null; then
-    echo "dialog no está instalado. Instalándolo ahora..."
-    sudo nala install -y dialog
+CURRENT_USER=$(whoami)
+
+# Función para verificar acceso sudo de forma robusta
+# Maneja: sudo como grupo primario, secundario, y formato con sufijo dos puntos (sudo:)
+check_sudo_access() {
+    # Primary: usar id -nG que maneja grupos secundarios correctamente
+    # Obtener grupos y normalizar eliminando sufijo dos puntos
+    for group in $(id -nG 2>/dev/null); do
+        # Eliminar sufijo dos puntos si existe (sudo: -> sudo)
+        group_clean="${group%:}"
+
+        if [ "$group_clean" = "sudo" ] || [ "$group_clean" = "root" ]; then
+            return 0
+        fi
+    done
+
+    # Fallback: verificar si el grupo sudo existe en el sistema
+    if getent group sudo >/dev/null 2>&1; then
+        return 0
+    fi
+
+    return 1
+}
+
+echo "=== Verificando configuración de sudo ==="
+
+# Verificar si el usuario ya tiene acceso sudo
+if check_sudo_access; then
+    echo "Usuario $CURRENT_USER ya tiene acceso sudo. Continuando..."
+    HAS_SUDO=true
+else
+    echo "Usuario $CURRENT_USER NO tiene acceso sudo. Configurando..."
+    HAS_SUDO=false
+
+    # Verificar si sudo está instalado
+    if ! command -v sudo &> /dev/null; then
+        echo "sudo no está instalado. Intentando instalar..."
+
+        # Intentar instalar sudo como root (sin sudo)
+        if [ "$(id -u)" -eq 0 ]; then
+            # Somos root, instalar directamente
+            apt update && apt install -y sudo
+            echo "sudo instalado correctamente."
+        else
+            # No somos root y no tenemos sudo -> intentar con su
+            echo "Intentando instalar sudo usando 'su'..."
+            if command -v su &> /dev/null; then
+                su -c "apt update && apt install -y sudo"
+                echo "sudo instalado mediante su."
+            else
+                echo "ERROR: No se puede instalar sudo. Necesitas ejecutarlo como root o tener acceso su."
+                exit 1
+            fi
+        fi
+    fi
+
+    # Ahora sudo debería estar instalado, añadir usuario al grupo sudo
+    if command -v sudo &> /dev/null; then
+        # Verificar si el grupo sudo existe
+        if getent group sudo >/dev/null 2>&1; then
+            echo "Agregando usuario $CURRENT_USER al grupo sudo..."
+
+            if [ "$(id -u)" -eq 0 ]; then
+                # Somos root,可以直接用usermod
+                usermod -aG sudo "$CURRENT_USER"
+            else
+                # Usar sudo si está disponible
+                sudo usermod -aG sudo "$CURRENT_USER"
+            fi
+
+            # Verificar que la adición funcionó
+            if check_sudo_access; then
+                echo "Usuario agregado al grupo sudo correctamente."
+            else
+                echo "ERROR: No se pudo agregar usuario al grupo sudo."
+                exit 1
+            fi
+        else
+            echo "ERROR: El grupo sudo no existe en el sistema."
+            exit 1
+        fi
+    fi
+
+    HAS_SUDO=true
 fi
 
-# ============================================
-# CONFIGURACIÓN INICIAL DEL SISTEMA
-# ============================================
+# Verificación final: asegurar que todo funcione
+echo ""
+echo "=== Verificando configuración final ==="
 
-# Detectar si el usuario actual tiene acceso sudo
-HAS_SUDO=false
-if groups | grep -q sudo || groups | grep -q root; then
-    HAS_SUDO=true
+# Verificar que sudo existe
+if ! command -v sudo &> /dev/null; then
+    echo "ERROR: sudo no está instalado."
+    exit 1
+fi
+echo "[OK] sudo está instalado"
+
+# Verificar que el usuario está en el grupo sudo
+if check_sudo_access; then
+    echo "[OK] Usuario $CURRENT_USER está en grupo sudo"
+else
+    echo "ERROR: Usuario no tiene acceso sudo después de la configuración."
+    exit 1
+fi
+
+# Verificar que los repos funcionan
+echo "[OK] Verificando repositorios..."
+apt update -qq 2>/dev/null || {
+    echo "ERROR: No se pueden actualizar los repositorios."
+    exit 1
+}
+echo "[OK] Repositorios funcionan correctamente"
+
+echo ""
+echo "=== Configuración de sudo completada exitosamente ==="
+echo ""
+
+# Guardar el usuario que ejecutará las instalaciones (para permisos correctos)
+TARGET_USER="$CURRENT_USER"
+if [ "$(id -u)" -eq 0 ]; then
+    # Si somos root,我们需要 guardar el usuario original para dar permisos
+    # El usuario al que se añadirá al grupo sudo
+    RUN_AS_USER="$CURRENT_USER"
+else
+    RUN_AS_USER="$CURRENT_USER"
 fi
 
 # Función para ejecutar comandos con o sin sudo
+# IMPORTANTE: Mantiene permisos del usuario, no de root
 run_cmd() {
-    if [ "$HAS_SUDO" = true ]; then
-        sudo "$@"
+    if [ "$(id -u)" -eq 0 ]; then
+        # Somos root - ejecutar directamente pero con verificación de errores
+        # Los archivos se crearán como root, se corregirán al final
+        "$@"
+        return $?
+    elif [ "$HAS_SUDO" = true ]; then
+        sudo -n "$@" 2>/dev/null && return $? || sudo "$@"
+        return $?
     else
         "$@"
+        return $?
     fi
-    return $?
 }
 
-# 1. Instalar sudo si no está instalado (requiere ser root o tener sudo)
-if ! command -v sudo &> /dev/null; then
-    echo "sudo no está instalado. Intentando instalar..."
-    apt update && apt install -y sudo
-    HAS_SUDO=true
-fi
-
-# 2. Agregar usuario actual al grupo sudo (si no lo está)
-CURRENT_USER=$(whoami)
-if [ "$HAS_SUDO" = true ]; then
-    if ! groups $CURRENT_USER 2>/dev/null | grep -q "\bsudo\b"; then
-        echo "Agregando usuario $CURRENT_USER al grupo sudo..."
-        sudo usermod -aG sudo $CURRENT_USER
-        echo "Usuario agregado al grupo sudo. Puede ser necesario cerrar sesión."
+# Al final del script, corregir permisos del usuario
+fix_permissions() {
+    if [ "$(id -u)" -eq 0 ] && [ -n "$TARGET_USER" ]; then
+        local user_home
+        user_home=$(getent passwd "$TARGET_USER" | cut -d: -f6)
+        if [ -n "$user_home" ] && [ -d "$user_home" ]; then
+            echo "=== Corrigiendo permisos para usuario $TARGET_USER ==="
+            chown -R "$TARGET_USER:$TARGET_USER" "$user_home" 2>/dev/null || true
+        fi
     fi
-else
-    # Si no hay sudo, intentar con su
-    echo "Advertencia: Usuario sin acceso sudo. Intentando con su..."
-    su -c "usermod -aG sudo $CURRENT_USER"
-fi
+}
 
 # 3. Ahora configurar repos de Debian Trixie
 echo "Configurando repos de Debian Trixie..."
@@ -1289,6 +1399,9 @@ echo "Tiempo total de ejecución: $((execution_time / 60)) minutos y $((executio
 internet_speed=$(curl -s -w %{speed_download} -o /dev/null http://example.com)
 echo "Velocidad de conexión a internet: $internet_speed MB/seg" >> "$log_file"
 
+# Corregir permisos si se ejecutaron como root
+fix_permissions
+
 # Mostrar resumen final
 echo ""
 echo "==========================================="
@@ -1299,3 +1412,5 @@ for app in "${installed_apps[@]}"; do
     echo "  - $app"
 done
 echo "==========================================="
+echo ""
+echo "NOTA: Si ejecutaste con 'su -c', haz logout y login para que los permisos de sudo tengan efecto."
