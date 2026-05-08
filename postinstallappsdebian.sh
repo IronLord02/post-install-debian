@@ -24,78 +24,69 @@ if [[ "$confirmacion" != "s" && "$confirmacion" != "S" ]]; then
     echo "Instalación cancelada por el usuario."
     exit 0
 fi
-
-echo ""
-echo "Iniciando instalación de paquetes básicos..."
 echo ""
 
-# Actualizar repositorios e instalar nala, axel, git
-sudo apt update -y
-sudo apt install -y nala
-sudo nala install -y axel git speedtest-cli
+echo "Configurando sudo y los repositorios necesarios antes de continuar..."
 
-# Comprobar si dialog está instalado, si no, instalarlo
-if ! command -v dialog &> /dev/null; then
-    echo "dialog no está instalado. Instalándolo ahora..."
-    sudo nala install -y dialog
-fi
+echo ""
 
-# ============================================
-# CONFIGURACIÓN INICIAL DEL SISTEMA
-# ============================================
-
-# Detectar si el usuario actual tiene acceso sudo
-HAS_SUDO=false
-if groups | grep -q sudo || groups | grep -q root; then
-    HAS_SUDO=true
-fi
-
-# Función para ejecutar comandos con o sin sudo
-run_cmd() {
-    if [ "$HAS_SUDO" = true ]; then
-        sudo "$@"
-    else
-        "$@"
-    fi
-    return $?
-}
-
-# 1. Instalar sudo si no está instalado (requiere ser root o tener sudo)
+# Detectar si sudo está instalado
 if ! command -v sudo &> /dev/null; then
-    echo "sudo no está instalado. Intentando instalar..."
-    apt update && apt install -y sudo
-    HAS_SUDO=true
-fi
-
-# 2. Agregar usuario actual al grupo sudo (si no lo está)
-CURRENT_USER=$(whoami)
-if [ "$HAS_SUDO" = true ]; then
-    if ! groups $CURRENT_USER 2>/dev/null | grep -q "\bsudo\b"; then
-        echo "Agregando usuario $CURRENT_USER al grupo sudo..."
-        sudo usermod -aG sudo $CURRENT_USER
-        echo "Usuario agregado al grupo sudo. Puede ser necesario cerrar sesión."
-    fi
-else
-    # Si no hay sudo, intentar con su
-    echo "Advertencia: Usuario sin acceso sudo. Intentando con su..."
-    su -c "usermod -aG sudo $CURRENT_USER"
-fi
-
-# 3. Ahora configurar repos de Debian Trixie
-echo "Configurando repos de Debian Trixie..."
-
-# Limpiar sources.list principal (si existe)
-run_cmd rm -f /etc/apt/sources.list
-
-# Limpiar sources.list.d y crear solo el de Trixie
-run_cmd rm -f /etc/apt/sources.list.d/*.list
-
-# Escribir nuevo sources.list
-run_cmd tee /etc/apt/sources.list << EOF
+    echo "sudo no está instalado. Cambiando a root..."
+    su -c '
+        set -e
+        echo "Configurando repositorios de Debian Trixie..."
+        cat > /etc/apt/sources.list << EOF
 deb https://deb.debian.org/debian/ trixie main contrib non-free non-free-firmware
 deb https://security.debian.org/debian-security trixie-security main contrib non-free non-free-firmware
 deb https://deb.debian.org/debian/ trixie-updates main contrib non-free non-free-firmware
 EOF
+        apt update && apt install -y sudo
+        # Agregar el usuario actual al grupo sudo
+        CURRENT_USER=$(logname)
+        usermod -aG sudo "$CURRENT_USER"
+        # Asegurarse de que el grupo sudo tenga permisos en sudoers
+        # Agregar línea específica para el usuario actual en sudoers
+CURRENT_USER=$(logname)
+if ! grep -q "^${CURRENT_USER} " /etc/sudoers; then
+    echo "${CURRENT_USER} ALL=(ALL:ALL) ALL" >> /etc/sudoers
+fi
+    '
+fi
+
+# Preguntar al usuario si desea usar nala o apt
+while true; do
+    read -p "¿Quieres usar nala como gestor de paquetes en lugar de apt? (s/n): " usar_nala
+    case "$usar_nala" in
+        s|S) USE_NALA=true; break;;
+        n|N) USE_NALA=false; break;;
+        *) echo "Respuesta no válida. Usa s o n.";;
+    esac
+done
+
+# Actualizar repositorios
+sudo apt update -y
+
+if $USE_NALA; then
+    # Instalar nala si no está presente
+    if ! command -v nala &> /dev/null; then
+        echo "Instalando nala..."
+        sudo apt install -y nala
+    fi
+    PKG_INSTALL="sudo nala install -y"
+else
+    echo "Usando apt como gestor de paquetes."
+    PKG_INSTALL="sudo apt install -y"
+fi
+
+# Instalar paquetes básicos usando el gestor seleccionado
+$PKG_INSTALL axel git speedtest-cli
+
+# Comprobar si dialog está instalado, si no, instalarlo
+if ! command -v dialog &> /dev/null; then
+    echo "dialog no está instalado. Instalándolo ahora..."
+    $PKG_INSTALL dialog
+fi
 
 # 4. Actualizar repositorios e instalar herramientas básicas
 echo "Actualizando repositorios..."
