@@ -73,10 +73,10 @@ if $USE_NALA; then
         echo "Instalando nala..."
         sudo apt install -y nala
     fi
-    PKG_INSTALL="sudo nala install -y"
+    PKG_INSTALL="sudo nala install"
 else
     echo "Usando apt como gestor de paquetes."
-    PKG_INSTALL="sudo apt install -y"
+    PKG_INSTALL="sudo apt install"
 fi
 
 # Instalar paquetes básicos usando el gestor seleccionado
