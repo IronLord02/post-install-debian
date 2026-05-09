@@ -379,45 +379,82 @@ esta_seleccionado() {
 # CÓDECS Y DRIVERS
 # ============================================
 if esta_seleccionado "0"; then
-    # Codecs multimedia completos para reproducción total out-of-the-box
+    # Codecs multimedia completos para Debian 13 Trixie
     echo "Instalando códecs multimedia..."
-    
-    # FFmpeg y libs principales
+
+    # GStreamer Core y herramientas
+    sudo nala install -y \
+        gstreamer1.0-tools \
+        gstreamer1.0-x \
+        gstreamer1.0-plugins-base \
+        gstreamer1.0-libav \
+        gstreamer1.0-plugins-good \
+        gstreamer1.0-plugins-rtp \
+        gstreamer1.0-plugins-ugly \
+        gstreamer1.0-plugins-bad \
+        gstreamer1.0-opencv \
+        gstreamer1.0-fdkaac \
+        gstreamer1.0-wpe \
+        gstreamer1.0-alsa \
+        gstreamer1.0-pulseaudio \
+        gstreamer1.0-vaapi \
+        gstreamer1.0-gl \
+        gstreamer1.0-gtk3 \
+        gstreamer1.0-qt5 \
+        gstreamer1.0-qt6 \
+        gstreamer1.0-libcamera \
+        gstreamer1.0-nice
+
+    # FFmpeg y librerías principales
     sudo nala install -y \
         ffmpeg \
         ffmpegthumbs \
         ffmpegthumbnailer \
         libavcodec-extra \
-        libavcodec-extra61 \
-        libavdevice61 \
-        libavformat61 \
-        libavutil61 \
-        libswscale8 \
-        libswresample4 \
-        libpostproc56
-    
-    # GStreamer completo
+        libavformat-extra \
+        libavfilter-extra \
+        libavdevice-dev \
+        libgstreamer1.0-dev \
+        libgstreamer-plugins-base1.0-dev \
+        libgstreamer-plugins-bad1.0-dev
+
+    # Librerías base VA-API y VDPAU
     sudo nala install -y \
-        gstreamer1.0-libav \
-        gstreamer1.0-plugins-ugly \
-        gstreamer1.0-plugins-bad \
-        gstreamer1.0-plugins-bad-apps \
-        gstreamer1.0-plugins-base \
-        gstreamer1.0-plugins-good \
-        gstreamer1.0-plugins-rtp \
-        gstreamer1.0-pulseaudio \
-        gstreamer1.0-alsa \
-        gstreamer1.0-x \
-        gstreamer1.0-tools \
-        gstreamer1.0-vaapi \
-        gstreamer1.0-gl \
-        gstreamer1.0-nice \
-        gstreamer1.0-fdkaac \
-        gstreamer1.0-adapter-pulseeffects \
-        gstreamer1.0-autogain-pulseeffects \
-        gstreamer1.0-convolver-pulseeffects \
-        gstreamer1.0-crystalizer-pulseeffects
-    
+        libva-dev \
+        libva-drm2 \
+        libva-x11-2 \
+        libva-glx2 \
+        libva-wayland2 \
+        libvdpau-dev \
+        libvpl-dev
+
+    # VA-API drivers (hardware acceleration)
+    sudo nala install -y \
+        intel-media-va-driver \
+        mesa-va-drivers \
+        vdpau-driver-all
+
+    # Codecs de video (H.264, H.265, VP8/VP9, AV1)
+    sudo nala install -y \
+        libx264-dev \
+        libx265-dev \
+        libvpx-dev \
+        libaom-dev \
+        libdav1d-dev \
+        librav1e-dev \
+        libsvtav1-dev \
+        libsvtav1enc-dev
+
+    # Codecs de audio
+    sudo nala install -y \
+        libopus-dev \
+        libvorbis-dev \
+        libmp3lame-dev \
+        libflac-dev \
+        libfaad2-dev \
+        libspeex-dev \
+        libtwolame-dev
+
     # Herramientas de audio/video
     sudo nala install -y \
         vorbis-tools \
@@ -430,13 +467,19 @@ if esta_seleccionado "0"; then
         x264 \
         x265 \
         vpx-tools \
+        mkvtoolnix-gui \
+        mkvtoolnix \
         sound-icons \
         mp3gain
-    
+
+    # Efectos y filtros
+    sudo nala install -y \
+        frei0r-plugins
+
     # Soporte para DVDs (libdvdcss2)
     sudo nala install -y libdvd-pkg
     sudo dpkg-reconfigure -p critical libdvd-pkg 2>/dev/null || true
-    
+
     installed_apps+=("Codecs Multimedia (completo)")
 fi
 
