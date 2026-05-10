@@ -192,15 +192,6 @@ else
         exit 1
     fi
 fi
-    done
-
-    # Fallback: verificar si el grupo sudo existe en el sistema
-    if getent group sudo >/dev/null 2>&1; then
-        return 0
-    fi
-
-    return 1
-}
 
 echo "=== Verificando configuración de sudo ==="
 
@@ -1045,8 +1036,8 @@ if esta_seleccionado "80"; then
 fi
 
 if esta_seleccionado "81"; then
-    sudo nala install -y zram-tools
-    installed_apps+=("ZRAM Tools")
+    sudo nala install -y zram-tools preload
+    installed_apps+=("ZRAM Tools + Preload")
 fi
 
 # ============================================
