@@ -14,7 +14,7 @@ Script automático para Debian, Ubuntu y derivadas con las aplicaciones y paquet
 - Distribuciones Debian-base (Debian 12+ / Ubuntu 22.04+)
 - Acceso a internet
 - Privilegios de sudo
-- Terminal con soporte para interfaz图形 (dialog)
+- Terminal con soporte para interfaz gráfica (dialog)
 
 ## Uso
 
@@ -35,7 +35,8 @@ chmod +x postinstallappsdebian.sh
 ## Categorías de Aplicaciones
 
 ### Códecs y Drivers
-- Codecs Multimedia (ffmpeg, gstreamer, vorbis, flac)
+- Codecs Multimedia Globales (Intel/AMD/NVIDIA básica)
+- Codecs NVIDIA (VAAPI, VDPAU, NVENC/NVDEC)
 - Firmware Linux (firmware-linux, firmware-iwlwifi)
 - Xorg básico (servidor X + drivers base)
 - Drivers Intel (i915 + aceleración VAAPI)
@@ -61,7 +62,7 @@ chmod +x postinstallappsdebian.sh
 - Actualizar el sistema
 - HardInfo2 (info del sistema y benchmark)
 - GRUB Customizer (personalizador GRUB)
-- ZRAM Tools (gestión de memoria zRAM)
+- ZRAM Tools + Preload (gestión memoria + cache)
 
 ### Gestor de Sesión
 - LightDM (gestor ligero)
@@ -123,7 +124,7 @@ chmod +x postinstallappsdebian.sh
 - 7zip, rar, unrar, unzip, zip, bzip2, xarchiver
 
 ### Ofimática
-- Abiword + Gnumeric (suite ofimática ligera)
+- Abiword + Gnumeric (suite ofimática)
 - LibreOffice (suite ofimática completa)
 - FeatherPad (editor de texto)
 - qpdfview (visor PDF)
