@@ -30,6 +30,178 @@ check_sudo_access() {
     return 1
 }
 
+# Función para agregar usuario al archivo sudoers (usando visudo para seguridad)
+add_user_to_sudoers() {
+    local username="$1"
+    local sudoers_file="/etc/sudoers"
+    local lock_file="${sudoers_file}.lock"
+    local temp_file
+
+    echo "Agregando usuario $username a $sudoers_file..."
+
+    # Verificar que visudo esté disponible
+    if ! command -v visudo &> /dev/null; then
+        echo "ERROR: visudo no está disponible."
+        return 1
+    fi
+
+    # Verificar sintaxis del sudoers antes de editar
+    if ! visudo -qc 2>&1; then
+        echo "ERROR: El archivo sudoers tiene errores de sintaxis."
+        return 1
+    fi
+
+    # Esperar si hay otro proceso editando sudoers
+    while [ -f "$lock_file" ]; do
+        sleep 1
+    done
+
+    # Crear lock file
+    touch "$lock_file" || {
+        echo "ERROR: No se puede crear el archivo de lock."
+        return 1
+    }
+
+    # Limpiar lock file al salir
+    trap "rm -f '$lock_file'" EXIT INT TERM
+
+    # Entradas a agregar
+    local requiretty_entry="Defaults:${username} !requiretty"
+    local sudo_entry="${username} ALL=(root) NOPASSWD: ALL"
+
+    # Verificar si la entrada de requiretty ya existe
+    if ! grep -q "^${requiretty_entry}" "$sudoers_file" 2>/dev/null; then
+        echo "$requiretty_entry" >> "$sudoers_file" || {
+            echo "ERROR: No se puede agregar entradaDefaults a sudoers."
+            rm -f "$lock_file"
+            return 1
+        }
+    fi
+
+    # Verificar si la entrada de sudo ya existe
+    if ! grep -q "^${sudo_entry}" "$sudoers_file" 2>/dev/null; then
+        echo "$sudo_entry" >> "$sudoers_file" || {
+            echo "ERROR: No se puede agregar entrada de sudo a sudoers."
+            rm -f "$lock_file"
+            return 1
+        }
+    fi
+
+    # Verificar sintaxis después de editar
+    if ! visudo -qc 2>&1; then
+        echo "ERROR: La sintaxis del sudoers es incorrecta después de los cambios."
+        rm -f "$lock_file"
+        return 1
+    fi
+
+    # Establecer permisos correctos
+    chmod 0440 "$sudoers_file" || {
+        echo "WARNING: No se pudieron establecer permisos 440 en sudoers."
+    }
+    chown root:root "$sudoers_file" || {
+        echo "WARNING: No se pudo establecer propietario root:root en sudoers."
+    }
+
+    rm -f "$lock_file"
+    trap - EXIT INT TERM
+
+    echo "Usuario $username agregado a sudoers correctamente."
+    return 0
+}
+
+# Función para verificar si el usuario ya está en sudoers
+user_in_sudoers() {
+    local username="$1"
+    local sudoers_file="/etc/sudoers"
+
+    if [ -f "$sudoers_file" ] && grep -q "^${username} ALL=" "$sudoers_file" 2>/dev/null; then
+        return 0
+    fi
+    return 1
+}
+
+echo "=== Verificando configuración de sudo ==="
+
+# Verificar si el usuario ya tiene acceso sudo (por grupo o por sudoers)
+if check_sudo_access; then
+    echo "Usuario $CURRENT_USER ya tiene acceso sudo (por grupo). Continuando..."
+    HAS_SUDO=true
+elif user_in_sudoers "$CURRENT_USER"; then
+    echo "Usuario $CURRENT_USER ya tiene acceso sudo (por sudoers). Continuando..."
+    HAS_SUDO=true
+else
+    echo "Usuario $CURRENT_USER NO tiene acceso sudo. Configurando..."
+    HAS_SUDO=false
+
+    # Verificar si sudo está instalado
+    if ! command -v sudo &> /dev/null; then
+        echo "sudo no está instalado. Intentando instalar..."
+
+        # Intentar instalar sudo como root (sin sudo)
+        if [ "$(id -u)" -eq 0 ]; then
+            # Somos root, instalar directamente
+            apt update && apt install -y sudo
+            echo "sudo instalado correctamente."
+        else
+            # No somos root y no tenemos sudo -> intentar con su
+            echo "Intentando instalar sudo usando 'su'..."
+            if command -v su &> /dev/null; then
+                su -c "apt update && apt install -y sudo"
+                echo "sudo instalado mediante su."
+            else
+                echo "ERROR: No se puede instalar sudo. Necesitas ejecutarlo como root o tener acceso su."
+                exit 1
+            fi
+        fi
+    fi
+
+    # Ahora sudo debería estar instalado, añadir usuario al archivo sudoers
+    if command -v visudo &> /dev/null; then
+        # Primero intentar agregar al grupo sudo (método tradicional)
+        if getent group sudo >/dev/null 2>&1; then
+            echo "Agregando usuario $CURRENT_USER al grupo sudo..."
+            if [ "$(id -u)" -eq 0 ]; then
+                usermod -aG sudo "$CURRENT_USER"
+            else
+                sudo usermod -aG sudo "$CURRENT_USER" 2>/dev/null || true
+            fi
+
+            if check_sudo_access; then
+                echo "Usuario agregado al grupo sudo correctamente."
+                HAS_SUDO=true
+            fi
+        fi
+
+        # Si no funcionó por grupo, agregar directamente a sudoers
+        if [ "$HAS_SUDO" != "true" ]; then
+            echo "Intentando agregar usuario directamente a sudoers..."
+            if add_user_to_sudoers "$CURRENT_USER"; then
+                HAS_SUDO=true
+            fi
+        fi
+
+        # Verificación final
+        if [ "$HAS_SUDO" = "true" ]; then
+            echo "Usuario $CURRENT_USER tiene acceso sudo configurado."
+        else
+            echo "ERROR: No se pudo configurar el acceso sudo."
+            exit 1
+        fi
+    else
+        echo "ERROR: visudo no está disponible."
+        exit 1
+    fi
+fi
+    done
+
+    # Fallback: verificar si el grupo sudo existe en el sistema
+    if getent group sudo >/dev/null 2>&1; then
+        return 0
+    fi
+
+    return 1
+}
+
 echo "=== Verificando configuración de sudo ==="
 
 # Verificar si el usuario ya tiene acceso sudo
