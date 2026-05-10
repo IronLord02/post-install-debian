@@ -403,7 +403,7 @@ opciones=$(dialog --stdout --checklist "Selecciona las aplicaciones que deseas i
     10 "  Actualizar el sistema" off \
     79 "  HardInfo2 (info del sistema y benchmark)" off \
     80 "  GRUB Customizer (personalizador GRUB)" off \
-    81 "  ZRAM Tools (gestión de memoria zRAM)" off \
+    81 "  ZRAM Tools + Preload (gestión memoria + cache)" off \
     "=== GESTOR DE SESIÓN ===" "" off \
     11 "  LightDM (gestor ligero)" off \
     12 "  SDDM (gestor KDE)" off \
