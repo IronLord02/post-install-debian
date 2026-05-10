@@ -18,6 +18,7 @@ Script automático para Debian, Ubuntu y derivadas con las aplicaciones y paquet
 
 ## Uso
 
+### Con sudo disponible
 ```bash
 # 1. Dar permisos de ejecución
 chmod +x postinstallappsdebian.sh
@@ -25,6 +26,18 @@ chmod +x postinstallappsdebian.sh
 # 2. Ejecutar el script
 ./postinstallappsdebian.sh
 ```
+
+### Sin sudo instalado (intento automático)
+Si no tenés sudo instalado, el script intentará instalarlo automáticamente:
+```bash
+# 1. Ejecutar como root usando 'su'
+su -c "chmod +x postinstallappsdebian.sh && ./postinstallappsdebian.sh"
+
+# O directamente como root
+su -c "./postinstallappsdebian.sh"
+```
+
+El script detectará si tenés sudo o no y automáticamente intentará configurar sudoers si es necesario.
 
 ## Notas
 
