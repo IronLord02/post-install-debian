@@ -216,7 +216,8 @@ echo "Si no ves la interfaz, presiona Enter para continuar..."
 
 opciones=$(dialog --stdout --checklist "Selecciona las aplicaciones que deseas instalar:" 0 0 0 \
     "=== CÓDECS Y DRIVERS ===" "" off \
-    0 "  Codecs Multimedia (ffmpeg, gstreamer, vorbis, flac)" off \
+    0 "  Codecs Multimedia Globales (Intel/AMD/NVIDIA básica)" off \
+    99 "  Codecs NVIDIA (VAAPI, VDPAU, NVENC/NVDEC)" off \
     1 "  Firmware Linux (firmware-linux, firmware-iwlwifi)" off \
     2 "  Xorg básico (servidor X + drivers base)" off \
     95 "  Drivers Intel (i915 + aceleración VAAPI)" off \
@@ -376,20 +377,20 @@ esta_seleccionado() {
 }
 
 # ============================================
-# CÓDECS Y DRIVERS
+# CÓDECS Y DRIVERS (todos de codecs.list sin -dev)
 # ============================================
 if esta_seleccionado "0"; then
-    # Codecs multimedia completos para Debian 13 Trixie
-    echo "Instalando códecs multimedia..."
+    # Codecs multimedia completos - todos los paquetes disponibles en repos Debian
+    echo "Instalando códecs multimedia completos..."
 
-    # GStreamer Core y herramientas
+    # --- GStreamer Core y Plugins ---
     sudo nala install -y \
         gstreamer1.0-tools \
         gstreamer1.0-x \
         gstreamer1.0-plugins-base \
         gstreamer1.0-libav \
         gstreamer1.0-plugins-good \
-        gstreamer1.0-plugins-rtp \
+        gstreamer1.0-rtsp \
         gstreamer1.0-plugins-ugly \
         gstreamer1.0-plugins-bad \
         gstreamer1.0-opencv \
@@ -402,60 +403,84 @@ if esta_seleccionado "0"; then
         gstreamer1.0-gtk3 \
         gstreamer1.0-qt5 \
         gstreamer1.0-qt6 \
-        gstreamer1.0-libcamera \
-        gstreamer1.0-nice
+        gstreamer1.0-libcamera
 
-    # FFmpeg y librerías principales
+    # --- FFmpeg / LibAV ---
+    # Nota: libavcodec-extra/libavformat-extra/libavfilter-extra excludedos por conflictos
+    # en Debian 13. Usar solo ffmpeg que ya incluye los códecs.
     sudo nala install -y \
-        ffmpeg \
-        ffmpegthumbs \
-        ffmpegthumbnailer \
-        libavcodec-extra \
-        libavformat-extra \
-        libavfilter-extra \
-        libavdevice-dev \
-        libgstreamer1.0-dev \
-        libgstreamer-plugins-base1.0-dev \
-        libgstreamer-plugins-bad1.0-dev
+        ffmpeg
 
-    # Librerías base VA-API y VDPAU
+    # --- VA-API Drivers (Hardware Acceleration) ---
+    # Solo Intel Gen 8+ (Broadwell en adelante) - el más común y moderno
+    # NO instalar i965 (gen≤9) junto con intel-media - son excluyentes
     sudo nala install -y \
-        libva-dev \
-        libva-drm2 \
-        libva-x11-2 \
-        libva-glx2 \
-        libva-wayland2 \
-        libvdpau-dev \
-        libvpl-dev
+        intel-media-va-driver
 
-    # VA-API drivers (hardware acceleration)
+    # AMD GPU (libre, amdgpu)
     sudo nala install -y \
-        intel-media-va-driver \
-        mesa-va-drivers \
+        mesa-va-drivers
+
+    # VDPAU general
+    sudo nala install -y \
         vdpau-driver-all
 
-    # Codecs de video (H.264, H.265, VP8/VP9, AV1)
+    # Intel QuickSync (QSV)
     sudo nala install -y \
-        libx264-dev \
-        libx265-dev \
-        libvpx-dev \
+        libmfx-gen1.2
+
+    # --- Video Codecs ---
+    # H.264 / AVC (solo uno - son excluyentes)
+    sudo nala install -y \
+        libopenh264-8
+
+    # H.265 / HEVC
+    sudo nala install -y \
+        libkvazaar-dev
+
+    # VP8 / VP9
+    sudo nala install -y \
+        libvpx-dev
+
+    # AV1 (Alliance for Open Media)
+    sudo nala install -y \
         libaom-dev \
         libdav1d-dev \
         librav1e-dev \
-        libsvtav1-dev \
         libsvtav1enc-dev
 
-    # Codecs de audio
+    # --- Audio Codecs ---
     sudo nala install -y \
-        libopus-dev \
-        libvorbis-dev \
-        libmp3lame-dev \
-        libflac-dev \
-        libfaad2-dev \
-        libspeex-dev \
-        libtwolame-dev
+        libopus0 \
+        libvorbis0a \
+        libvorbisenc2 \
+        libmp3lame0 \
+        libflac14 \
+        libfaad2 \
+        libspeex1 \
+        libtwolame0 \
+        libgsm1 \
+        libjxl0.11 \
+        libwavpack1 \
+        libxvidcore4
 
-    # Herramientas de audio/video
+    # --- Codecs de imagen ---
+    sudo nala install -y \
+        libjpeg62 \
+        libwebp7 \
+        libpng16-16t64 \
+        libtiff6
+
+    # --- Containers / Muxers / Demuxers ---
+    sudo nala install -y \
+        mkvtoolnix-gui \
+        mkvtoolnix
+
+    # --- Efectos y filtros ---
+    sudo nala install -y \
+        frei0r-plugins
+
+    # --- Herramientas de audio/video ---
     sudo nala install -y \
         vorbis-tools \
         flac \
@@ -467,20 +492,44 @@ if esta_seleccionado "0"; then
         x264 \
         x265 \
         vpx-tools \
-        mkvtoolnix-gui \
-        mkvtoolnix \
         sound-icons \
-        mp3gain
+        mp3gain \
+        ffmpegthumbs \
+        ffmpegthumbnailer
 
-    # Efectos y filtros
-    sudo nala install -y \
-        frei0r-plugins
-
-    # Soporte para DVDs (libdvdcss2)
+    # --- Soporte para DVDs (libdvdcss2) ---
     sudo nala install -y libdvd-pkg
     sudo dpkg-reconfigure -p critical libdvd-pkg 2>/dev/null || true
 
-    installed_apps+=("Codecs Multimedia (completo)")
+    installed_apps+=("Codecs Multimedia Globales")
+fi
+
+# ============================================
+# CÓDECS NVIDIA (Hardware Acceleration)
+# ============================================
+if esta_seleccionado "99"; then
+    # Codecs específicos para GPU NVIDIA
+    echo "Instalando códecs NVIDIA..."
+
+    # VA-API driver para NVIDIA
+    sudo nala install -y \
+        nvidia-vaapi-driver
+
+    # VDPAU driver para NVIDIA
+    sudo nala install -y \
+        nvidia-vdpau-driver
+
+    # NVIDIA NVENC (hardware encoding) / NVDEC (hardware decoding)
+    # Requiere driver propietario nvidia-*
+    sudo nala install -y \
+        libnvidia-encode1 \
+        libnvcuvid1
+
+    # Nota: Los códecs nvenc específicos (libx264-nvenc-760, libx265-nvenc-760)
+    # no están disponibles en repos Debian. Se instalan automáticamente con el
+    # driver propietario de NVIDIA.
+
+    installed_apps+=("Codecs NVIDIA")
 fi
 
 if esta_seleccionado "1"; then
