@@ -403,7 +403,10 @@ if esta_seleccionado "0"; then
         gstreamer1.0-gtk3 \
         gstreamer1.0-qt5 \
         gstreamer1.0-qt6 \
-        gstreamer1.0-libcamera
+        gstreamer1.0-libcamera \
+        gstreamer1.0-plugins-base-apps \
+        gstreamer1.0-plugins-bad-apps \
+        gstreamer1.0-pipewire
 
     # --- FFmpeg / LibAV ---
     # Nota: libavcodec-extra/libavformat-extra/libavfilter-extra excludedos por conflictos
@@ -1144,7 +1147,29 @@ fi
 # COMPRESIÓN Y ARCHIVOS
 # ============================================
 if esta_seleccionado "21"; then
-    sudo nala install -y p7zip-full rar unrar unzip zip bzip2 xarchiver
+    # Descompresores completos
+    sudo nala install -y \
+        p7zip-full \
+        rar \
+        unrar \
+        unace \
+        lzip \
+        arj \
+        sharutils \
+        mpack \
+        lzma \
+        lzop \
+        unzip \
+        zip \
+        bzip2 \
+        lhasa \
+        cabextract \
+        lrzip \
+        rzip \
+        zpaq \
+        kgb \
+        xz-utils \
+        xarchiver
     installed_apps+=("Herramientas de compresión")
 fi
 
