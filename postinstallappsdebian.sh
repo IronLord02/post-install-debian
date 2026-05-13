@@ -34,7 +34,7 @@ echo ""
 CURRENT_USER=$(logname)
 
 # Cambiar a root para hacer toda la configuración de sudo
-sudo su -c "
+su -c "
     set -e
     
     if ! command -v sudo &> /dev/null; then
