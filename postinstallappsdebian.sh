@@ -56,8 +56,7 @@ su -c "
 		#deb-src https://deb.debian.org/debian/ trixie-proposed-updates main contrib non-free non-free-firmware
 		# Backports
 		deb https://deb.debian.org/debian/ trixie-backports main contrib non-free non-free-firmware
-		#deb-src https://deb.debian.org/debian/ trixie-backports main contrib non-free non-free-firmware
-	EOF
+		#deb-src https://deb.debian.org/debian/ trixie-backports main contrib non-free non-free-firmwareEOF
 	echo \"Actualizando el sistema\"
         apt update
 	echo \"Instalando sudo\"
