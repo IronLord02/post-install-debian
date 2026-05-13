@@ -59,7 +59,7 @@ EOF
     if ! grep -q \"^${CURRENT_USER} \" /etc/sudoers; then
         echo \"Configurando sudoers para $CURRENT_USER...\"
         # Buscar la línea \"root ALL=(ALL:ALL) ALL\" y escribir debajo la del usuario
-        sed -i '/^root ALL=(ALL:ALL) ALL$/a '"${CURRENT_USER} ALL=(ALL:ALL) ALL"'' /etc/sudoers
+        sed -i \"/^root ALL=(ALL:ALL) ALL\$/a ${CURRENT_USER} ALL=(ALL:ALL) ALL\" /etc/sudoers
         echo \"sudo configurado correctamente para $CURRENT_USER\"
     else
         echo \"sudo ya está configurado para $CURRENT_USER\"
