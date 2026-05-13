@@ -11,11 +11,11 @@ echo "║                                                          ║"
 echo "║     Bienvenido al Script de Post-Instalación Debian      ║"
 echo "║                                                          ║"
 echo "║  Este script instalará paquetes y aplicaciones que te    ║"
-echo "║  permiten personalizar y optimizar tu sistema Debian.    ║"
+echo "║  permiten personalizar y optimizar su sistema Debian.    ║"
 echo "║                                                          ║"
 echo "╚══════════════════════════════════════════════════════════╝"
 echo ""
-echo "Se procederá a actualizar repositorios e instalar herramientas"
+echo "Se procederá a actualizar repositorios e instalar herramientas para la ejecucion"
 echo "básicas necesarias (nala, axel, git, speedtest-cli, dialog)."
 echo ""
 read -p "¿Deseas continuar con la instalación de los paquetes básicos? (s/n): " confirmacion
@@ -24,6 +24,8 @@ if [[ "$confirmacion" != "s" && "$confirmacion" != "S" ]]; then
     echo "Instalación cancelada por el usuario."
     exit 0
 fi
+
+
 echo ""
 
 echo "Configurando sudo y los repositorios necesarios antes de continuar..."
@@ -56,23 +58,25 @@ su -c "
 		deb https://deb.debian.org/debian/ trixie-backports main contrib non-free non-free-firmware
 		#deb-src https://deb.debian.org/debian/ trixie-backports main contrib non-free non-free-firmware
 	EOF
-        apt update && apt install -y sudo
+	echo \"Actualizando el sistema\"
+        apt update
+	echo \"Instalando sudo\"
+	apt install -y sudo
         echo \"sudo instalado correctamente\"
     else
         echo \"sudo ya está instalado\"
     fi
     
     echo \"\"
-    echo \"Verificando configuración de sudo para $CURRENT_USER...\"
+    echo \"Verificando configuración de sudo para el usuario $CURRENT_USER...\"
     
     if ! grep -q \"^${CURRENT_USER} \" /etc/sudoers; then
-        echo \"Configurando sudoers para $CURRENT_USER...\"
-        # Usar '|' como delimitador para evitar problemas con '/'
+        echo \"Configurando sudo para el usuario $CURRENT_USER...\"'
         # Buscar línea de root con tab y agregar línea de usuario con tab
 	sed -i '/^root\tALL=(ALL:ALL) ALL/a '"${CURRENT_USER}"'\tALL=(ALL:ALL) ALL' /etc/sudoers
-        echo \"sudo configurado correctamente para $CURRENT_USER\"
+        echo \"sudo configurado correctamente para el usuario $CURRENT_USER\"
     else
-        echo \"sudo ya está configurado para $CURRENT_USER\"
+        echo \"sudo ya está configurado para el usuario $CURRENT_USER\"
     fi
 "
 
@@ -85,9 +89,6 @@ while true; do
         *) echo "Respuesta no válida. Usa s o n.";;
     esac
 done
-
-# Actualizar repositorios
-sudo apt update -y
 
 if $USE_NALA; then
     # Instalar nala si no está presente
@@ -102,18 +103,13 @@ else
 fi
 
 # Instalar paquetes básicos usando el gestor seleccionado
-$PKG_INSTALL axel git speedtest-cli
+$PKG_INSTALL -y axel git speedtest-cli
 
 # Comprobar si dialog está instalado, si no, instalarlo
 if ! command -v dialog &> /dev/null; then
     echo "dialog no está instalado. Instalándolo ahora..."
-    $PKG_INSTALL dialog
+    $PKG_INSTALL -y dialog
 fi
-
-# 4. Actualizar repositorios e instalar herramientas básicas
-echo "Actualizando repositorios..."
-run_cmd apt update
-run_cmd apt install -y nala axel git speedtest-cli dialog
 
 # Recargar grupos para que tenga efecto inmediato
 echo "Recargando grupos del usuario..."
