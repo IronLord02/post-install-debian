@@ -60,10 +60,11 @@ if command -v sudo &> /dev/null; then
     echo "Verificando configuración de sudo..."
     CURRENT_USER=$(logname)
     
-    # Verificar si el usuario actual está en /etc/sudoers
-    if ! sudo grep -q "^${CURRENT_USER} " /etc/sudoers; then
+    # Verificar si el usuario actual está en /etc/sudoers (sin usar sudo)
+    if ! grep -q "^${CURRENT_USER} " /etc/sudoers 2>/dev/null; then
         echo "Configurando sudo para el usuario actual..."
-        sudo bash -c "
+        # Cambiar a root para configurar sudoers
+        su -c "
             if ! grep -q \"^${CURRENT_USER} \" /etc/sudoers; then
                 sed -i \"/^root ALL=(ALL:ALL) ALL\$/a ${CURRENT_USER} ALL=(ALL:ALL) ALL\n\" /etc/sudoers
             fi
