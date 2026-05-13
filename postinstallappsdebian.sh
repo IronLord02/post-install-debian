@@ -41,10 +41,21 @@ su -c "
         echo \"sudo no está instalado. Instalando...\"
         echo \"Configurando repositorios de Debian Trixie...\"
         cat > /etc/apt/sources.list << EOF
-deb https://deb.debian.org/debian/ trixie main contrib non-free non-free-firmware
-deb https://security.debian.org/debian-security trixie-security main contrib non-free non-free-firmware
-deb https://deb.debian.org/debian/ trixie-updates main contrib non-free non-free-firmware
-EOF
+		# Main
+		deb https://deb.debian.org/debian/ trixie main contrib non-free non-free-firmware
+		#deb-src https://deb.debian.org/debian/ trixie main contrib non-free non-free-firmware
+		# Security
+		deb https://security.debian.org/debian-security trixie-security main contrib non-free non-free-firmware
+		#deb-src https://security.debian.org/debian-security trixie-security main contrib non-free non-free-firmware		
+		# Updates
+		deb https://deb.debian.org/debian/ trixie-updates main contrib non-free non-free-firmware
+		#deb-src https://deb.debian.org/debian/ trixie-updates main contrib non-free non-free-firmware
+		deb https://deb.debian.org/debian/ trixie-proposed-updates main contrib non-free non-free-firmware
+		#deb-src https://deb.debian.org/debian/ trixie-proposed-updates main contrib non-free non-free-firmware
+		# Backports
+		deb https://deb.debian.org/debian/ trixie-backports main contrib non-free non-free-firmware
+		#deb-src https://deb.debian.org/debian/ trixie-backports main contrib non-free non-free-firmware
+	EOF
         apt update && apt install -y sudo
         echo \"sudo instalado correctamente\"
     else
