@@ -55,14 +55,15 @@ EOF
     echo \"\"
     echo \"Verificando configuración de sudo para $CURRENT_USER...\"
     
-    # Verificar si el usuario está en /etc/sudoers
-    if ! grep -q \"^${CURRENT_USER} \" /etc/sudoers; then
-        echo \"Configurando sudoers para $CURRENT_USER...\"
-        # Buscar la línea \"root ALL=(ALL:ALL) ALL\" y escribir debajo la del usuario
-        sed -i \"/^root ALL=\(ALL:ALL\) ALL\$/a ${CURRENT_USER} ALL=(ALL:ALL) ALL\" /etc/sudoers
-        echo \"sudo configurado correctamente para $CURRENT_USER\"
-    else
+    # Verificar si el usuario ya está configurado (en sudoers o sudoers.d)
+    if grep -q \"^${CURRENT_USER} \" /etc/sudoers 2>/dev/null || [ -f /etc/sudoers.d/${CURRENT_USER} ]; then
         echo \"sudo ya está configurado para $CURRENT_USER\"
+    else
+        echo \"Configurando sudoers para $CURRENT_USER...\"
+        # Usar /etc/sudoers.d/ (práctica recomendada en Debian)
+        echo \"${CURRENT_USER} ALL=(ALL:ALL) ALL\" > /etc/sudoers.d/${CURRENT_USER}
+        chmod 440 /etc/sudoers.d/${CURRENT_USER}
+        echo \"sudo configurado correctamente para $CURRENT_USER\"
     fi
 "
 
