@@ -55,6 +55,25 @@ fi
     '
 fi
 
+# Verificar que sudo está correctamente configurado
+if command -v sudo &> /dev/null; then
+    echo "Verificando configuración de sudo..."
+    CURRENT_USER=$(logname)
+    
+    # Verificar si el usuario actual está en /etc/sudoers
+    if ! sudo grep -q "^${CURRENT_USER} " /etc/sudoers; then
+        echo "Configurando sudo para el usuario actual..."
+        sudo bash -c "
+            if ! grep -q \"^${CURRENT_USER} \" /etc/sudoers; then
+                sed -i \"/^root ALL=(ALL:ALL) ALL\$/a ${CURRENT_USER} ALL=(ALL:ALL) ALL\n\" /etc/sudoers
+            fi
+        "
+        echo "sudo configurado correctamente para ${CURRENT_USER}"
+    else
+        echo "sudo ya está configurado para ${CURRENT_USER}"
+    fi
+fi
+
 # Preguntar al usuario si desea usar nala o apt
 while true; do
     read -p "¿Quieres usar nala como gestor de paquetes en lugar de apt? (s/n): " usar_nala
