@@ -34,10 +34,9 @@ echo ""
 CURRENT_USER=$(logname)
 
 # Cambiar a root para hacer toda la configuración de sudo
-su -c "
+sudo su -c "
     set -e
     
-    # Detectar si sudo está instalado
     if ! command -v sudo &> /dev/null; then
         echo \"sudo no está instalado. Instalando...\"
         echo \"Configurando repositorios de Debian Trixie...\"
@@ -55,11 +54,11 @@ EOF
     echo \"\"
     echo \"Verificando configuración de sudo para $CURRENT_USER...\"
     
-    # Verificar si el usuario está en /etc/sudoers
     if ! grep -q \"^${CURRENT_USER} \" /etc/sudoers; then
         echo \"Configurando sudoers para $CURRENT_USER...\"
-        # Buscar la línea \"root ALL=(ALL:ALL) ALL\" y escribir debajo la del usuario
-        sed -i \"/^root ALL=\(ALL:ALL\) ALL\$/a ${CURRENT_USER} ALL=(ALL:ALL) ALL\" /etc/sudoers
+        # Usar '|' como delimitador para evitar problemas con '/'
+        # Buscar línea de root con tab y agregar línea de usuario con tab
+	sed -i '/^root\tALL=(ALL:ALL) ALL/a '"${CURRENT_USER}"'\tALL=(ALL:ALL) ALL' /etc/sudoers
         echo \"sudo configurado correctamente para $CURRENT_USER\"
     else
         echo \"sudo ya está configurado para $CURRENT_USER\"
