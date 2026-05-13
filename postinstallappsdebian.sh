@@ -42,14 +42,15 @@ deb https://security.debian.org/debian-security trixie-security main contrib non
 deb https://deb.debian.org/debian/ trixie-updates main contrib non-free non-free-firmware
 EOF
         apt update && apt install -y sudo
-        # Agregar el usuario actual al grupo sudo
-        CURRENT_USER=$(logname)
-        usermod -aG sudo "$CURRENT_USER"
-        # Asegurarse de que el grupo sudo tenga permisos en sudoers
-        # Agregar línea específica para el usuario actual en sudoers
+         # Agregar el usuario actual al grupo sudo
+         CURRENT_USER=$(logname)
+         #usermod -aG sudo "$CURRENT_USER"
+         # Asegurarse de que el grupo sudo tenga permisos en sudoers
+         # Agregar línea específica para el usuario actual en sudoers
 CURRENT_USER=$(logname)
 if ! grep -q "^${CURRENT_USER} " /etc/sudoers; then
-    echo "${CURRENT_USER} ALL=(ALL:ALL) ALL" >> /etc/sudoers
+    # Buscar la línea "root ALL=(ALL:ALL) ALL" y escribir debajo la del usuario
+    sed -i "/^root ALL=(ALL:ALL) ALL$/a ${CURRENT_USER} ALL=(ALL:ALL) ALL\n" /etc/sudoers
 fi
     '
 fi
