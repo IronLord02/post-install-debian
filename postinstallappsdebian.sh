@@ -30,50 +30,41 @@ echo "Configurando sudo y los repositorios necesarios antes de continuar..."
 
 echo ""
 
-# Detectar si sudo está instalado
-if ! command -v sudo &> /dev/null; then
-    echo "sudo no está instalado. Cambiando a root..."
-    su -c '
-        set -e
-        echo "Configurando repositorios de Debian Trixie..."
+# Obtener el usuario que ejecutó el script (antes de cambiar a root)
+CURRENT_USER=$(logname)
+
+# Cambiar a root para hacer toda la configuración de sudo
+su -c "
+    set -e
+    
+    # Detectar si sudo está instalado
+    if ! command -v sudo &> /dev/null; then
+        echo \"sudo no está instalado. Instalando...\"
+        echo \"Configurando repositorios de Debian Trixie...\"
         cat > /etc/apt/sources.list << EOF
 deb https://deb.debian.org/debian/ trixie main contrib non-free non-free-firmware
 deb https://security.debian.org/debian-security trixie-security main contrib non-free non-free-firmware
 deb https://deb.debian.org/debian/ trixie-updates main contrib non-free non-free-firmware
 EOF
         apt update && apt install -y sudo
-         # Agregar el usuario actual al grupo sudo
-         CURRENT_USER=$(logname)
-         #usermod -aG sudo "$CURRENT_USER"
-         # Asegurarse de que el grupo sudo tenga permisos en sudoers
-         # Agregar línea específica para el usuario actual en sudoers
-CURRENT_USER=$(logname)
-if ! grep -q "^${CURRENT_USER} " /etc/sudoers; then
-    # Buscar la línea "root ALL=(ALL:ALL) ALL" y escribir debajo la del usuario
-    sed -i "/^root ALL=(ALL:ALL) ALL$/a ${CURRENT_USER} ALL=(ALL:ALL) ALL\n" /etc/sudoers
-fi
-    '
-fi
-
-# Verificar que sudo está correctamente configurado
-if command -v sudo &> /dev/null; then
-    echo "Verificando configuración de sudo..."
-    CURRENT_USER=$(logname)
-    
-    # Verificar si el usuario actual está en /etc/sudoers (sin usar sudo)
-    if ! grep -q "^${CURRENT_USER} " /etc/sudoers 2>/dev/null; then
-        echo "Configurando sudo para el usuario actual..."
-        # Cambiar a root para configurar sudoers
-        su -c "
-            if ! grep -q \"^${CURRENT_USER} \" /etc/sudoers; then
-                sed -i \"/^root ALL=(ALL:ALL) ALL\$/a ${CURRENT_USER} ALL=(ALL:ALL) ALL\n\" /etc/sudoers
-            fi
-        "
-        echo "sudo configurado correctamente para ${CURRENT_USER}"
+        echo \"sudo instalado correctamente\"
     else
-        echo "sudo ya está configurado para ${CURRENT_USER}"
+        echo \"sudo ya está instalado\"
     fi
-fi
+    
+    echo \"\"
+    echo \"Verificando configuración de sudo para $CURRENT_USER...\"
+    
+    # Verificar si el usuario está en /etc/sudoers
+    if ! grep -q \"^${CURRENT_USER} \" /etc/sudoers; then
+        echo \"Configurando sudoers para $CURRENT_USER...\"
+        # Buscar la línea \"root ALL=(ALL:ALL) ALL\" y escribir debajo la del usuario
+        sed -i \"/^root ALL=(ALL:ALL) ALL\$/a ${CURRENT_USER} ALL=(ALL:ALL) ALL\n\" /etc/sudoers
+        echo \"sudo configurado correctamente para $CURRENT_USER\"
+    else
+        echo \"sudo ya está configurado para $CURRENT_USER\"
+    fi
+"
 
 # Preguntar al usuario si desea usar nala o apt
 while true; do
